@@ -23,6 +23,7 @@ from PIL import Image
 from scripts.daam import trace, utils, api_attention_texts
 
 before_image_saved_handler = None
+override_attention_texts: str | None = None
 
 class Script(scripts.Script):
     
@@ -72,7 +73,17 @@ class Script(scripts.Script):
         
         return [attention_texts, hide_images, dont_save_images, hide_caption, use_grid, grid_layouyt, alpha, heatmap_image_scale, trace_each_layers, layers_as_row]
 
-    def process(self, 
+    def before_process(self, p, *args):
+        global override_attention_texts
+        if "daam-texts" in p.override_settings:
+            texts = p.override_settings["daam-texts"]
+            if texts is not None:
+                override_attention_texts = p.override_settings["daam-texts"]
+                del p.override_settings["daam-texts"]
+                return
+        override_attention_texts = None
+
+    def process(self,
             p : StableDiffusionProcessing, 
             attention_texts : str, 
             hide_images : bool, 
@@ -88,7 +99,11 @@ class Script(scripts.Script):
         self.enabled = False # in case the assert fails
         assert opts.samples_save, "Cannot run Daam script. Enable 'Always save all generated images' setting."
 
-        if api_attention_texts:
+        global override_attention_texts
+        if override_attention_texts:
+            attention_texts = override_attention_texts
+            override_attention_texts = None
+        elif api_attention_texts:
             attention_texts = api_attention_texts
 
         self.images = []
