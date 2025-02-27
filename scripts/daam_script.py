@@ -20,7 +20,7 @@ from modules.shared import cmd_opts, opts, state
 import modules.shared as shared
 from PIL import Image
 
-from scripts.daam import trace, utils
+from scripts.daam import trace, utils, api_attention_texts
 
 before_image_saved_handler = None
 
@@ -70,8 +70,8 @@ class Script(scripts.Script):
         
         self.tracers = None
         
-        return [attention_texts, hide_images, dont_save_images, hide_caption, use_grid, grid_layouyt, alpha, heatmap_image_scale, trace_each_layers, layers_as_row] 
-    
+        return [attention_texts, hide_images, dont_save_images, hide_caption, use_grid, grid_layouyt, alpha, heatmap_image_scale, trace_each_layers, layers_as_row]
+
     def process(self, 
             p : StableDiffusionProcessing, 
             attention_texts : str, 
@@ -87,6 +87,9 @@ class Script(scripts.Script):
         
         self.enabled = False # in case the assert fails
         assert opts.samples_save, "Cannot run Daam script. Enable 'Always save all generated images' setting."
+
+        if api_attention_texts:
+            attention_texts = api_attention_texts
 
         self.images = []
         self.hide_images = hide_images
